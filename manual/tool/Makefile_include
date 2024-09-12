@@ -16,7 +16,7 @@ pdf:: metadata.yml *.md
 	pandoc \
 		metadata.yml $(wildcard *.md)  \
 		--output manual.pdf \
-		--template $(TOOL_DIR)/template/eisvogel1.tex \
+		--template $(TOOL_DIR)/template/eisvogel.tex \
 		--from markdown \
 		--listings \
 		--number-sections \
