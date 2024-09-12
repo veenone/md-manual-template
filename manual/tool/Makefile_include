@@ -3,7 +3,9 @@
 
 OUT_DIR = build
 RESOURCES = $(TOOL_DIR)/template images
-MKDIR_P = mkdir -p
+MKDIR_P = $(shell powershell -Command "if (-not (Test-Path '$(OUT_DIR)')) { New-Item -Path '$(OUT_DIR)' -ItemType Directory }")
+DATE = $(shell powershell -Command "Get-Date -Format 'yyyy-MM-dd'")
+
 
 # Targets not producing a file with their name
 .PHONY: all pdf html dist clean
@@ -12,18 +14,19 @@ all:: pdf html
 
 pdf:: metadata.yml *.md
 	pandoc \
-		metadata.yml *.md \
+		metadata.yml $(wildcard *.md)  \
 		--output manual.pdf \
-		--template $(TOOL_DIR)/template/eisvogel.tex \
+		--template $(TOOL_DIR)/template/eisvogel1.tex \
 		--from markdown \
 		--listings \
 		--number-sections \
 		--table-of-contents \
-		--metadata date="`date -u '+%Y-%m-%d'`"
+		--metadata date="$(DATE)"
 
 html:: metadata.yml *.md
-	pandoc \
-		metadata.yml *.md \
+	${MKDIR_P}
+	pandoc --verbose\
+		metadata.yml $(wildcard *.md) \
 		--output manual.html \
 		--template $(TOOL_DIR)/template/mdbook.html \
 		--from markdown \
@@ -32,15 +35,20 @@ html:: metadata.yml *.md
 		--table-of-contents \
 		--toc-depth=2 \
 		--katex \
-		--metadata date="`date -u '+%Y-%m-%d'`"
+		--metadata=date:"$(DATE)"
+	@powershell -Command "$(COPY_CMD '$(TOOL_DIR)\template\*' '$(OUT_DIR)\template')"
+	@powershell -Command "$(COPY_CMD 'manual.html' '$(OUT_DIR')"
+
 
 dist:: all
-	${MKDIR_P} ${OUT_DIR}
-	cp -r ${RESOURCES} ${OUT_DIR}/
-	mv manual.pdf ${OUT_DIR}/
-	mv manual.html ${OUT_DIR}/index.html
+	${MKDIR_P}
+	@powershell -Command "$(COPY_CMD '${RESOURCES}\*' '$(OUT_DIR)')"
+	@powershell -Command "$(COPY_CMD 'manual.pdf' '$(OUT_DIR)')"
+	@powershell -Command "$(COPY_CMD 'manual.html' '$(OUT_DIR)')"
+	
+	
 
 clean::
-	rm -f manual.pdf
-	rm -f manual.html
-	rm -rf ${OUT_DIR}
+	@powershell -Command "if (Test-Path 'manual.pdf') { Remove-Item 'manual.pdf' -Force }"
+	@powershell -Command "if (Test-Path 'manual.html') { Remove-Item 'manual.html' -Force }"
+	@powershell -Command "if (Test-Path '$(OUT_DIR)') { Remove-Item '$(OUT_DIR)' -Recurse -Force }"

@@ -8,8 +8,8 @@ subject: "Markdown"
 keywords: [Markdown, Example]
 lang: "en"
 titlepage: true
-titlepage-text-color: "005e85"
-titlepage-rule-color: "005e85"
+titlepage-text-color: "430099"
+titlepage-rule-color: "430099"
 titlepage-rule-height: 2
 logo: "images/libresolar-logo-lateral.pdf"
 logo-width: 200
