@@ -3,8 +3,10 @@
 
 OUT_DIR = build
 RESOURCES = $(TOOL_DIR)/template images
-MKDIR_P = $(shell powershell -Command "if (-not (Test-Path '$(OUT_DIR)')) { New-Item -Path '$(OUT_DIR)' -ItemType Directory }")
+MKDIR_P = powershell -Command "if (-not (Test-Path '$(OUT_DIR)')) { New-Item -Path '$(OUT_DIR)' -ItemType Directory }"
 DATE = $(shell powershell -Command "Get-Date -Format 'yyyy-MM-dd'")
+COPY_CMD = powershell -Command "Copy-Item -Path '$(1)' -Destination '$(2)' -Recurse -Force"
+
 
 
 # Targets not producing a file with their name
@@ -16,15 +18,16 @@ pdf:: metadata.yml *.md
 	pandoc \
 		metadata.yml $(wildcard *.md)  \
 		--output manual.pdf \
-		--template $(TOOL_DIR)/template/eisvogel.tex \
+		--template $(TOOL_DIR)/template/eisvogel1.tex \
 		--from markdown \
 		--listings \
 		--number-sections \
 		--table-of-contents \
+		--lua-filter=include.lua \
 		--metadata date="$(DATE)"
+	@powershell -Command "$(COPY_CMD 'manual.pdf' '$(OUT_DIR)')"
 
 html:: metadata.yml *.md
-	${MKDIR_P}
 	pandoc --verbose\
 		metadata.yml $(wildcard *.md) \
 		--output manual.html \
@@ -36,15 +39,19 @@ html:: metadata.yml *.md
 		--toc-depth=2 \
 		--katex \
 		--metadata=date:"$(DATE)"
-	@powershell -Command "$(COPY_CMD '$(TOOL_DIR)\template\*' '$(OUT_DIR)\template')"
-	@powershell -Command "$(COPY_CMD 'manual.html' '$(OUT_DIR')"
+
 
 
 dist:: all
-	${MKDIR_P}
-	@powershell -Command "$(COPY_CMD '${RESOURCES}\*' '$(OUT_DIR)')"
-	@powershell -Command "$(COPY_CMD 'manual.pdf' '$(OUT_DIR)')"
-	@powershell -Command "$(COPY_CMD 'manual.html' '$(OUT_DIR)')"
+	$(MKDIR_P)
+	xcopy /E /I /Q "$(TOOL_DIR)\template" "$(OUT_DIR)\template"
+	xcopy /E /I /Q "images" "$(OUT_DIR)\images"
+	@echo copying manual.pdf	
+	xcopy /I /Q "manual.pdf" "$(OUT_DIR)"
+	@echo copying manual.html
+	xcopy /I /Q "manual.html" "$(OUT_DIR)"
+	
+	
 	
 	
 
